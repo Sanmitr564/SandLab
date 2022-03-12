@@ -11,9 +11,10 @@ public class SandLab {
     public static final int METAL = 1;
     public static final int FALLING_SAND = 2;
     public static final int WATER = 3;
-    public static final int GRASS = 4;
+    public static final int FALLING_GRASS = 4;
 
     public static final int SAND = 5;
+    public static final int GRASS = 6;
 
 
     public static final Color[] colors = new Color[]{
@@ -24,6 +25,7 @@ public class SandLab {
             new Color(0, 154, 23),
 
             new Color(76, 70, 50),
+            new Color(0, 154, 23),
     };
     //do not add any more fields
     private int[][] grid;
@@ -36,7 +38,7 @@ public class SandLab {
         names[METAL] = "Metal";
         names[FALLING_SAND] = "Sand";
         names[WATER] = "Water";
-        names[GRASS] = "Grass";
+        names[FALLING_GRASS] = "Grass";
         display = new SandDisplay("Falling Sand", numRows, numCols, names);
         grid = new int[numRows][numCols];
     }
@@ -60,42 +62,8 @@ public class SandLab {
     public void step() {
         int row = (int) (Math.random() * grid.length);
         int col = (int) (Math.random() * grid[row].length);
-        if (grid[row][col] == FALLING_SAND) {
-            if (row == grid.length - 1 || grid[row + 1][col] == METAL) {
-                grid[row][col] = SAND;
-            }else if (grid[row + 1][col] == EMPTY) {
-                move(row, col, 1, 0, FALLING_SAND, EMPTY);
-            } else if (grid[row + 1][col] == WATER) {
-                move(row, col, 1, 0, FALLING_SAND, WATER);
-            } else if (grid[row + 1][col] == SAND || grid[row+1][col] == GRASS) {
-                Runnable[] moves = new Runnable[4];
-                int numMoves = 0;
-                //moves[0] = () -> move(row, col, 0, 0, SAND, SAND);
-                if (col < grid[row].length - 1 && (grid[row + 1][col + 1] == EMPTY || grid[row + 1][col + 1] == WATER)) {
-                    moves[numMoves] = () -> move(row, col, 1, 1, FALLING_SAND, grid[row + 1][col + 1]);
-                    numMoves++;
-                }
-                if (col > 0 && (grid[row + 1][col - 1] == EMPTY || grid[row + 1][col - 1] == WATER)) {
-                    moves[numMoves] = () -> move(row, col, 1, -1, FALLING_SAND, grid[row + 1][col - 1]);
-                    numMoves++;
-                }
-                if (col > 0 && col < grid[row].length - 1 && Math.random() < 2 / 3f) {
-                    if (grid[row + 1][col - 1] == SAND && (grid[row][col - 1] == EMPTY || grid[row][col - 1] == WATER) && grid[row][col + 1] == SAND) {
-                        moves[numMoves] = () -> move(row, col, 0, -1, FALLING_SAND, grid[row][col - 1]);
-                        numMoves++;
-                    }
-                    if (grid[row + 1][col + 1] == SAND && (grid[row][col + 1] == EMPTY || grid[row][col + 1] == WATER) && grid[row][col - 1] == SAND) {
-                        moves[numMoves] = () -> move(row, col, 0, 1, FALLING_SAND, grid[row][col + 1]);
-                        numMoves++;
-                    }
-                }
-                if (Math.random() < 1 / 25f || numMoves == 0) {
-                    move(row, col, 0, 0, SAND, SAND);
-                } else {
-                    moves[(int) (Math.random() * numMoves)].run();
-                }
-            }
-        }
+
+        fall(row, col, SAND, FALLING_SAND);
 
         if (grid[row][col] == SAND) {
             if (row + 1 < grid.length && (grid[row + 1][col] == EMPTY || grid[row + 1][col] == WATER)) {
@@ -139,6 +107,14 @@ public class SandLab {
             }
         }
 
+        fall(row, col, GRASS, FALLING_GRASS);
+
+        if (grid[row][col] == GRASS) {
+            if (row + 1 < grid.length && (grid[row + 1][col] == EMPTY || grid[row + 1][col] == WATER)) {
+                move(row, col, 1, 0, FALLING_GRASS, grid[row + 1][col]);
+            }
+        }
+
         if (grid[row][col] == WATER) {
             Runnable[] moves = new Runnable[3];
             int numMoves = 0;
@@ -158,11 +134,50 @@ public class SandLab {
                 moves[(int) (Math.random() * numMoves)].run();
         }
 
+
     }
 
     private void move(int row, int col, int rowOffset, int colOffset, int type1, int type2) {
         grid[row][col] = type2;
         grid[row + rowOffset][col + colOffset] = type1;
+    }
+
+    private void fall(int row, int col, int material, int fallingMaterial){
+        if (grid[row][col] == fallingMaterial) {
+            if (row == grid.length - 1 || grid[row + 1][col] == METAL) {
+                grid[row][col] = material;
+            }else if (grid[row + 1][col] == EMPTY) {
+                move(row, col, 1, 0, fallingMaterial, EMPTY);
+            } else if (grid[row + 1][col] == WATER) {
+                move(row, col, 1, 0, fallingMaterial, WATER);
+            } else if (grid[row + 1][col] == material || grid[row+1][col] == GRASS) {
+                Runnable[] moves = new Runnable[4];
+                int numMoves = 0;
+                if (col < grid[row].length - 1 && (grid[row + 1][col + 1] == EMPTY || grid[row + 1][col + 1] == WATER)) {
+                    moves[numMoves] = () -> move(row, col, 1, 1, fallingMaterial, grid[row + 1][col + 1]);
+                    numMoves++;
+                }
+                if (col > 0 && (grid[row + 1][col - 1] == EMPTY || grid[row + 1][col - 1] == WATER)) {
+                    moves[numMoves] = () -> move(row, col, 1, -1, fallingMaterial, grid[row + 1][col - 1]);
+                    numMoves++;
+                }
+                if (col > 0 && col < grid[row].length - 1 && Math.random() < 2 / 3f) {
+                    if (grid[row + 1][col - 1] == material && (grid[row][col - 1] == EMPTY || grid[row][col - 1] == WATER) && grid[row][col + 1] == material) {
+                        moves[numMoves] = () -> move(row, col, 0, -1, fallingMaterial, grid[row][col - 1]);
+                        numMoves++;
+                    }
+                    if (grid[row + 1][col + 1] == material && (grid[row][col + 1] == EMPTY || grid[row][col + 1] == WATER) && grid[row][col - 1] == material) {
+                        moves[numMoves] = () -> move(row, col, 0, 1, fallingMaterial, grid[row][col + 1]);
+                        numMoves++;
+                    }
+                }
+                if (Math.random() < 1 / 25f || numMoves == 0) {
+                    grid[row][col] = material;
+                } else {
+                    moves[(int) (Math.random() * numMoves)].run();
+                }
+            }
+        }
     }
 
     private boolean hasWaterAccess(int row, int col) {
