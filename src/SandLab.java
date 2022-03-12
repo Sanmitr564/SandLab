@@ -103,13 +103,13 @@ public class SandLab {
             } else {
                 boolean isExposedToAir = false;
                 boolean isExposedToWater = false;
-                if ((row + 1 < grid.length && grid[row + 1][col] == EMPTY) || row + 1 == grid.length) {
+                if ((row + 1 < grid.length && grid[row + 1][col] == EMPTY)) {
                     isExposedToAir = true;
-                } else if ((row > 0 && grid[row - 1][col] == EMPTY) || row == 0) {
+                } else if (row > 0 && grid[row - 1][col] == EMPTY) {
                     isExposedToAir = true;
-                } else if ((col + 1 < grid[row].length && grid[row][col + 1] == EMPTY) || col + 1 == grid[row].length) {
+                } else if (col + 1 < grid[row].length && grid[row][col + 1] == EMPTY) {
                     isExposedToAir = true;
-                } else if ((col > 0 && grid[row][col - 1] == EMPTY) || col == 0) {
+                } else if (col > 0 && grid[row][col - 1] == EMPTY) {
                     isExposedToAir = true;
                 }
 
@@ -122,17 +122,17 @@ public class SandLab {
                                 }
                                 if (grid[row + rowOffset][col + colOffset] == WATER) {
                                     isExposedToWater = true;
-                                    grid[row+rowOffset][col+colOffset] = EMPTY;
+                                    grid[row + rowOffset][col + colOffset] = EMPTY;
                                     grid[row][col] = GRASS;
                                 }
                             } catch (Exception e) {
-                                continue;
+
                             }
                         }
                     }
                 }
 
-                if (isExposedToAir && grid[row][col] != GRASS) {
+                if (isExposedToAir && grid[row][col] != GRASS && Math.random() < .9) {
                     grid[row][col] = GRASS;
                     if (!hasWaterAccess(row, col)) {
                         grid[row][col] = SAND;
@@ -169,20 +169,15 @@ public class SandLab {
 
     private boolean hasWaterAccess(int row, int col) {
         boolean[][] spaces = new boolean[grid.length][grid[0].length];
-        if (checkAccess(row, col, spaces)) {
-            return true;
-        }
-        return false;
+        return checkAccess(row, col, spaces);
     }
 
     private boolean checkAccess(int row, int col, boolean[][] spaces) {
-        if ((grid[row][col] != GRASS && grid[row][col] != WATER) || !spaces[row][col]) {
-            return false;
-        }
         if (grid[row][col] == WATER) {
-            //TODO: Fix, doesn't run
-            System.out.print("hi");
             return true;
+        }
+        if ((grid[row][col] != GRASS && grid[row][col] != WATER) || spaces[row][col]) {
+            return false;
         }
         spaces[row][col] = true;
         for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
@@ -195,9 +190,11 @@ public class SandLab {
                         if (checkAccess(row + rowOffset, col + colOffset, spaces)) {
                             return true;
                         }
+                    }else if(grid[row+rowOffset][col+colOffset] == WATER){
+                        grid[row+rowOffset][col+colOffset] = EMPTY;
+                        return true;
                     }
                 } catch (Exception e) {
-                    continue;
                 }
             }
         }
