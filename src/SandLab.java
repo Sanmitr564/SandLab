@@ -12,10 +12,11 @@ public class SandLab {
     public static final int FALLING_SAND = 2;
     public static final int WATER = 3;
     public static final int FALLING_GRASS = 4;
+    public static final int FALLING_PLASTIC = 5;
 
-    public static final int SAND = 5;
-    public static final int GRASS = 6;
-
+    public static final int SAND = 6;
+    public static final int GRASS = 7;
+    public static final int PLASTIC = 8;
 
     public static final Color[] colors = new Color[]{
             new Color(0, 0, 0),
@@ -23,9 +24,11 @@ public class SandLab {
             new Color(76, 70, 50),
             new Color(156, 211, 219),
             new Color(0, 154, 23),
+            new Color(255, 254, 247),
 
             new Color(76, 70, 50),
             new Color(0, 154, 23),
+            new Color(255, 254, 247),
     };
     //do not add any more fields
     private int[][] grid;
@@ -33,12 +36,13 @@ public class SandLab {
 
     public SandLab(int numRows, int numCols) {
         String[] names;
-        names = new String[5];
+        names = new String[6];
         names[EMPTY] = "Empty";
         names[METAL] = "Metal";
         names[FALLING_SAND] = "Sand";
         names[WATER] = "Water";
         names[FALLING_GRASS] = "Grass";
+        names[FALLING_PLASTIC] = "Plastic";
         display = new SandDisplay("Falling Sand", numRows, numCols, names);
         grid = new int[numRows][numCols];
     }
@@ -63,57 +67,47 @@ public class SandLab {
         int row = (int) (Math.random() * grid.length);
         int col = (int) (Math.random() * grid[row].length);
 
-        fall(row, col, SAND, FALLING_SAND);
 
-        if (grid[row][col] == SAND) {
-            if (row + 1 < grid.length && (grid[row + 1][col] == EMPTY || grid[row + 1][col] == WATER)) {
-                move(row, col, 1, 0, FALLING_SAND, grid[row + 1][col]);
-            } else {
-                boolean isExposedToAir = false;
-                if ((row + 1 < grid.length && grid[row + 1][col] == EMPTY)) {
-                    isExposedToAir = true;
-                } else if (row > 0 && grid[row - 1][col] == EMPTY) {
-                    isExposedToAir = true;
-                } else if (col + 1 < grid[row].length && grid[row][col + 1] == EMPTY) {
-                    isExposedToAir = true;
-                } else if (col > 0 && grid[row][col - 1] == EMPTY) {
-                    isExposedToAir = true;
-                }
+        if (fall(row, col, SAND, FALLING_SAND)) {
+            boolean isExposedToAir = false;
+            if ((row + 1 < grid.length && grid[row + 1][col] == EMPTY)) {
+                isExposedToAir = true;
+            } else if (row > 0 && grid[row - 1][col] == EMPTY) {
+                isExposedToAir = true;
+            } else if (col + 1 < grid[row].length && grid[row][col + 1] == EMPTY) {
+                isExposedToAir = true;
+            } else if (col > 0 && grid[row][col - 1] == EMPTY) {
+                isExposedToAir = true;
+            }
 
-                if (isExposedToAir) {
-                    for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
-                        for (int colOffset = -1; colOffset < 2; colOffset++) {
-                            try {
-                                if (rowOffset == 0 && colOffset == 0) {
-                                    continue;
-                                }
-                                if (grid[row + rowOffset][col + colOffset] == WATER) {
-                                    grid[row + rowOffset][col + colOffset] = EMPTY;
-                                    grid[row][col] = GRASS;
-                                }
-                            } catch (Exception e) {
-
+            if (isExposedToAir) {
+                for (int rowOffset = -1; rowOffset < 2; rowOffset++) {
+                    for (int colOffset = -1; colOffset < 2; colOffset++) {
+                        try {
+                            if (rowOffset == 0 && colOffset == 0) {
+                                continue;
                             }
+                            if (grid[row + rowOffset][col + colOffset] == WATER) {
+                                grid[row + rowOffset][col + colOffset] = EMPTY;
+                                grid[row][col] = GRASS;
+                            }
+                        } catch (Exception e) {
+
                         }
                     }
                 }
+            }
 
-                if (isExposedToAir && grid[row][col] != GRASS && Math.random() < .9) {
-                    grid[row][col] = GRASS;
-                    if (!hasWaterAccess(row, col)) {
-                        grid[row][col] = SAND;
-                    }
+            if (isExposedToAir && grid[row][col] != GRASS && Math.random() < .9) {
+                grid[row][col] = GRASS;
+                if (!hasWaterAccess(row, col)) {
+                    grid[row][col] = SAND;
                 }
             }
+
         }
 
         fall(row, col, GRASS, FALLING_GRASS);
-
-        if (grid[row][col] == GRASS) {
-            if (row + 1 < grid.length && (grid[row + 1][col] == EMPTY || grid[row + 1][col] == WATER)) {
-                move(row, col, 1, 0, FALLING_GRASS, grid[row + 1][col]);
-            }
-        }
 
         if (grid[row][col] == WATER) {
             Runnable[] moves = new Runnable[3];
@@ -134,7 +128,7 @@ public class SandLab {
                 moves[(int) (Math.random() * numMoves)].run();
         }
 
-
+        fall(row, col, PLASTIC, FALLING_PLASTIC);
     }
 
     private void move(int row, int col, int rowOffset, int colOffset, int type1, int type2) {
@@ -142,15 +136,15 @@ public class SandLab {
         grid[row + rowOffset][col + colOffset] = type1;
     }
 
-    private void fall(int row, int col, int material, int fallingMaterial){
+    private boolean fall(int row, int col, int material, int fallingMaterial) {
         if (grid[row][col] == fallingMaterial) {
-            if (row == grid.length - 1 || grid[row + 1][col] == METAL) {
+            if (row == grid.length - 1) {
                 grid[row][col] = material;
-            }else if (grid[row + 1][col] == EMPTY) {
+            } else if (grid[row + 1][col] == EMPTY) {
                 move(row, col, 1, 0, fallingMaterial, EMPTY);
             } else if (grid[row + 1][col] == WATER) {
                 move(row, col, 1, 0, fallingMaterial, WATER);
-            } else if (grid[row + 1][col] == material || grid[row+1][col] == GRASS) {
+            } else {
                 Runnable[] moves = new Runnable[4];
                 int numMoves = 0;
                 if (col < grid[row].length - 1 && (grid[row + 1][col + 1] == EMPTY || grid[row + 1][col + 1] == WATER)) {
@@ -162,11 +156,11 @@ public class SandLab {
                     numMoves++;
                 }
                 if (col > 0 && col < grid[row].length - 1 && Math.random() < 2 / 3f) {
-                    if (grid[row + 1][col - 1] == material && (grid[row][col - 1] == EMPTY || grid[row][col - 1] == WATER) && grid[row][col + 1] == material) {
+                    if (/*grid[row + 1][col - 1] == material && */(grid[row][col - 1] == EMPTY || grid[row][col - 1] == WATER) && grid[row][col + 1] == material) {
                         moves[numMoves] = () -> move(row, col, 0, -1, fallingMaterial, grid[row][col - 1]);
                         numMoves++;
                     }
-                    if (grid[row + 1][col + 1] == material && (grid[row][col + 1] == EMPTY || grid[row][col + 1] == WATER) && grid[row][col - 1] == material) {
+                    if (/*grid[row + 1][col + 1] == material && */(grid[row][col + 1] == EMPTY || grid[row][col + 1] == WATER) && grid[row][col - 1] == material) {
                         moves[numMoves] = () -> move(row, col, 0, 1, fallingMaterial, grid[row][col + 1]);
                         numMoves++;
                     }
@@ -178,6 +172,14 @@ public class SandLab {
                 }
             }
         }
+        if (grid[row][col] == material) {
+            if (row + 1 < grid.length && (grid[row + 1][col] == EMPTY || grid[row + 1][col] == WATER)) {
+                move(row, col, 1, 0, fallingMaterial, grid[row + 1][col]);
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     private boolean hasWaterAccess(int row, int col) {
@@ -203,8 +205,8 @@ public class SandLab {
                         if (checkAccess(row + rowOffset, col + colOffset, spaces)) {
                             return true;
                         }
-                    }else if(grid[row+rowOffset][col+colOffset] == WATER){
-                        grid[row+rowOffset][col+colOffset] = EMPTY;
+                    } else if (grid[row + rowOffset][col + colOffset] == WATER) {
+                        grid[row + rowOffset][col + colOffset] = EMPTY;
                         return true;
                     }
                 } catch (Exception e) {
