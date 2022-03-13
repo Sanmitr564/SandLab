@@ -201,13 +201,13 @@ public class SandLab {
                     continue;
                 }
                 try {
-                    if (grid[row + rowOffset][col + colOffset] == GRASS) {
+                    if (grid[row + rowOffset][col + colOffset] == WATER) {
+                        grid[row + rowOffset][col + colOffset] = EMPTY;
+                        return true;
+                    } else if (grid[row + rowOffset][col + colOffset] == GRASS) {
                         if (checkAccess(row + rowOffset, col + colOffset, spaces)) {
                             return true;
                         }
-                    } else if (grid[row + rowOffset][col + colOffset] == WATER) {
-                        grid[row + rowOffset][col + colOffset] = EMPTY;
-                        return true;
                     }
                 } catch (Exception e) {
                 }
