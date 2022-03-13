@@ -189,6 +189,7 @@ public class SandLab {
 
     private boolean checkAccess(int row, int col, boolean[][] spaces) {
         if (grid[row][col] == WATER) {
+            grid[row][col] = EMPTY;
             return true;
         }
         if ((grid[row][col] != GRASS && grid[row][col] != WATER) || spaces[row][col]) {
@@ -201,6 +202,7 @@ public class SandLab {
                     continue;
                 }
                 try {
+                    /*
                     if (grid[row + rowOffset][col + colOffset] == WATER) {
                         grid[row + rowOffset][col + colOffset] = EMPTY;
                         return true;
@@ -208,6 +210,10 @@ public class SandLab {
                         if (checkAccess(row + rowOffset, col + colOffset, spaces)) {
                             return true;
                         }
+                    }
+                     */
+                    if(checkAccess(row+rowOffset, col+colOffset, spaces)){
+                        return true;
                     }
                 } catch (Exception e) {
                 }
